@@ -1,16 +1,15 @@
 cmake_minimum_required(VERSION 3.22)
-project(RumbleVSTGUI VERSION 0.2.0.0 DESCRIPTION "Rumble VSTGUI compatibility test")
+project(RumbleVSTGUI VERSION 0.3.0.0 DESCRIPTION "Rumble VSTGUI compatibility test")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
 
-# Build only this plug-in. The SDK examples require extra utility targets
-# such as moduleinfotool and are not needed here.
 set(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(SMTG_ENABLE_VST3_HOSTING_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(SMTG_CREATE_PLUGIN_LINK 0 CACHE BOOL "" FORCE)
+set(SMTG_ENABLE_VSTGUI_SUPPORT ON CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
   vst3sdk
@@ -33,7 +32,6 @@ smtg_add_vst3plugin(RumbleVSTGUI
 )
 
 target_link_libraries(RumbleVSTGUI PRIVATE sdk vstgui_support)
-
 smtg_target_add_plugin_resources(RumbleVSTGUI RESOURCES resource/Rumble.uidesc)
 smtg_target_configure_version_file(RumbleVSTGUI)
 
