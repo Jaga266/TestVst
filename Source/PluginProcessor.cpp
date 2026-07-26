@@ -34,7 +34,8 @@ void RumbleSweepAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     filter.reset();
     filter.prepare (spec);
     filter.setType (juce::dsp::StateVariableTPTFilterType::lowpass);
-    filter.setResonance (0.78f);
+    filter.setResonance (0.72f);
+    filter.setCutoffFrequency (18000.0f);
 }
 
 bool RumbleSweepAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -46,7 +47,7 @@ bool RumbleSweepAudioProcessor::isBusesLayoutSupported (const BusesLayout& layou
 
 void RumbleSweepAudioProcessor::updateFilter (float cutoffHz)
 {
-    filter.setCutoffFrequency (juce::jlimit (30.0f, 20000.0f, cutoffHz));
+    filter.setCutoffFrequency (juce::jlimit (35.0f, 19500.0f, cutoffHz));
 }
 
 void RumbleSweepAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
@@ -56,8 +57,8 @@ void RumbleSweepAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     for (int ch = getTotalNumInputChannels(); ch < getTotalNumOutputChannels(); ++ch)
         buffer.clear (ch, 0, buffer.getNumSamples());
 
-    auto sweep = parameters.getRawParameterValue ("sweep")->load();
-    auto crunch = parameters.getRawParameterValue ("crunch")->load();
+    const float sweep = parameters.getRawParameterValue ("sweep")->load();
+    const float crunch = parameters.getRawParameterValue ("crunch")->load();
 
     double bpm = fallbackBpm;
     if (auto* playHead = getPlayHead())
@@ -65,29 +66,27 @@ void RumbleSweepAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
             if (auto hostBpm = position->getBpm())
                 bpm = juce::jlimit (20.0, 400.0, *hostBpm);
 
-    const double samplesPerCycle = currentSampleRate * 60.0 / bpm;
-    const double phaseInc = 1.0 / samplesPerCycle;
+    const double phaseInc = bpm / (60.0 * currentSampleRate);
+    const float drive = 1.0f + crunch * 10.0f;
+    const float normaliser = 1.0f / std::tanh (drive);
+    constexpr int controlInterval = 16;
 
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
     {
-        const float ramp = static_cast<float> (1.0 - phase);
-        const float envelope = std::pow (ramp, 2.4f);
-        const float minCutoff = 75.0f;
-        const float maxCutoff = 18000.0f;
-        const float modulated = minCutoff * std::pow (maxCutoff / minCutoff,
-                                                     juce::jlimit (0.0f, 1.0f,
-                                                         (1.0f - sweep) + sweep * envelope));
-        updateFilter (modulated);
-
-        const float drive = 1.0f + crunch * 18.0f;
-        const float normaliser = 1.0f / std::tanh (drive);
+        if ((sample % controlInterval) == 0)
+        {
+            const float ramp = static_cast<float> (1.0 - phase);
+            const float envelope = ramp * ramp;
+            const float shaped = juce::jlimit (0.0f, 1.0f, (1.0f - sweep) + sweep * envelope);
+            const float cutoff = 70.0f * std::exp (shaped * std::log (18000.0f / 70.0f));
+            updateFilter (cutoff);
+        }
 
         for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
         {
             auto* data = buffer.getWritePointer (channel);
-            float x = data[sample];
-            x = std::tanh (x * drive) * normaliser;
-            data[sample] = filter.processSample (channel, x);
+            const float saturated = std::tanh (data[sample] * drive) * normaliser;
+            data[sample] = filter.processSample (channel, saturated);
         }
 
         phase += phaseInc;
