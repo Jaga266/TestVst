@@ -25,16 +25,21 @@ jobs:
         shell: pwsh
         run: cmake --build build --config Release --parallel
 
-      - name: Package VST3
+      - name: Stage VST3
         shell: pwsh
         run: |
-          $plugin = Get-ChildItem -Path build -Recurse -Directory -Filter "Rumble Sweep.vst3" | Select-Object -First 1
-          if (-not $plugin) { throw "Rumble Sweep.vst3 non trovato" }
-          Compress-Archive -Path $plugin.FullName -DestinationPath RumbleSweep-Windows-VST3.zip
+          $plugin = Get-ChildItem -Path build -Recurse -Directory -Filter "*.vst3" | Select-Object -First 1
+          if (-not $plugin) {
+            Get-ChildItem -Path build -Recurse | Select-Object FullName
+            throw "Nessun bundle VST3 trovato"
+          }
+          New-Item -ItemType Directory -Force -Path artifact | Out-Null
+          Copy-Item -Path $plugin.FullName -Destination "artifact\RumbleSweep.vst3" -Recurse -Force
+          Get-ChildItem -Path artifact -Recurse | Select-Object FullName
 
       - name: Upload Windows VST3
         uses: actions/upload-artifact@v4
         with:
           name: RumbleSweep-Windows-VST3
-          path: RumbleSweep-Windows-VST3.zip
+          path: artifact/RumbleSweep.vst3
           if-no-files-found: error
