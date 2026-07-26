@@ -1,8 +1,8 @@
 #include "PluginEditor.h"
 
 void RumbleLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int width, int height,
-                                          float sliderPos, float startAngle, float endAngle,
-                                          juce::Slider&)
+                                           float sliderPos, float startAngle, float endAngle,
+                                           juce::Slider&)
 {
     auto bounds = juce::Rectangle<float> (static_cast<float> (x), static_cast<float> (y),
                                           static_cast<float> (width), static_cast<float> (height))
@@ -25,6 +25,7 @@ void RumbleLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int w
 RumbleSweepAudioProcessorEditor::RumbleSweepAudioProcessorEditor (RumbleSweepAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
 {
+    setOpaque (true);
     setLookAndFeel (&lookAndFeel);
     setSize (620, 360);
 
@@ -56,6 +57,27 @@ RumbleSweepAudioProcessorEditor::RumbleSweepAudioProcessorEditor (RumbleSweepAud
 RumbleSweepAudioProcessorEditor::~RumbleSweepAudioProcessorEditor()
 {
     setLookAndFeel (nullptr);
+}
+
+void RumbleSweepAudioProcessorEditor::parentHierarchyChanged()
+{
+    if (auto* peer = getPeer())
+    {
+        const auto engines = peer->getAvailableRenderingEngines();
+
+        for (int i = 0; i < engines.size(); ++i)
+        {
+            if (engines[i].containsIgnoreCase ("software"))
+            {
+                peer->setCurrentRenderingEngine (i);
+                break;
+            }
+        }
+
+        peer->performAnyPendingRepaintsNow();
+    }
+
+    repaint();
 }
 
 void RumbleSweepAudioProcessorEditor::paint (juce::Graphics& g)
