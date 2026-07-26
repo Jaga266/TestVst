@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<vstgui-ui-description version="1">
+  <colors>
+    <color name="Background" rgba="#11141AFF"/>
+    <color name="Panel" rgba="#202631FF"/>
+    <color name="Accent" rgba="#FF7448FF"/>
+    <color name="Text" rgba="#EEF2F7FF"/>
+    <color name="Muted" rgba="#8993A3FF"/>
+  </colors>
+  <control-tags>
+    <control-tag name="Sweep" tag="100"/>
+    <control-tag name="Crunch" tag="101"/>
+  </control-tags>
+  <template class="CViewContainer" name="RumbleView" origin="0, 0" size="520, 300" background-color="Background" transparent="false" opacity="1">
+    <view class="CViewContainer" origin="18, 18" size="484, 264" background-color="Panel" transparent="false" opacity="1"/>
+    <view class="CTextLabel" origin="38, 32" size="300, 38" title="RUMBLE" font-color="Text" font-size="28" text-alignment="left" transparent="true"/>
+    <view class="CTextLabel" origin="38, 67" size="300, 22" title="VSTGUI compatibility test" font-color="Muted" font-size="13" text-alignment="left" transparent="true"/>
+    <view class="CKnob" origin="72, 112" size="130, 130" control-tag="Sweep" min-value="0" max-value="1" default-value="0.7" handle-color="Accent" handle-line-width="5" corona-color="Accent" corona-drawing="true" corona-inset="5" corona-outline="true" transparent="true"/>
+    <view class="CTextLabel" origin="72, 245" size="130, 22" title="SWEEP" font-color="Text" font-size="14" text-alignment="center" transparent="true"/>
+    <view class="CKnob" origin="318, 112" size="130, 130" control-tag="Crunch" min-value="0" max-value="1" default-value="0.15" handle-color="Accent" handle-line-width="5" corona-color="Accent" corona-drawing="true" corona-inset="5" corona-outline="true" transparent="true"/>
+    <view class="CTextLabel" origin="318, 245" size="130, 22" title="CRUNCH" font-color="Text" font-size="14" text-alignment="center" transparent="true"/>
+  </template>
+</vstgui-ui-description>
