@@ -18,8 +18,7 @@ void RumbleLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int w
     arc.addCentredArc (centre.x, centre.y, radius - 5.0f, radius - 5.0f,
                        0.0f, startAngle, angle, true);
     g.setColour (juce::Colour (0xffee6a3b));
-    g.strokePath (arc, juce::PathStrokeType (4.0f, juce::PathStrokeType::curved,
-                                             juce::PathStrokeType::rounded));
+    g.strokePath (arc, juce::PathStrokeType (4.0f));
 
     juce::Path pointer;
     pointer.addRoundedRectangle (-2.5f, -radius * 0.72f, 5.0f, radius * 0.36f, 2.5f);
@@ -38,16 +37,18 @@ RumbleSweepAudioProcessorEditor::RumbleSweepAudioProcessorEditor (RumbleSweepAud
     {
         slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
         slider->setTextBoxStyle (juce::Slider::TextBoxBelow, false, 76, 22);
-        slider->setTextValueSuffix (" %");
         slider->setColour (juce::Slider::textBoxTextColourId, juce::Colour (0xffe8edf3));
         slider->setColour (juce::Slider::textBoxBackgroundColourId, juce::Colour (0xff171a20));
         slider->setColour (juce::Slider::textBoxOutlineColourId, juce::Colour (0xff343a46));
         slider->setNumDecimalPlacesToDisplay (0);
+        slider->setRepaintsOnMouseActivity (false);
+        slider->textFromValueFunction = [] (double value) { return juce::String (juce::roundToInt (value * 100.0)) + " %"; };
+        slider->valueFromTextFunction = [] (const juce::String& text) { return text.getDoubleValue() / 100.0; };
         addAndMakeVisible (*slider);
     }
 
-    sweepSlider.setRange (0.0, 100.0, 1.0);
-    crunchSlider.setRange (0.0, 100.0, 1.0);
+    sweepSlider.setRange (0.0, 1.0, 0.001);
+    crunchSlider.setRange (0.0, 1.0, 0.001);
 
     sweepLabel.setText ("SWEEP", juce::dontSendNotification);
     crunchLabel.setText ("CRUNCH", juce::dontSendNotification);
@@ -66,21 +67,6 @@ RumbleSweepAudioProcessorEditor::RumbleSweepAudioProcessorEditor (RumbleSweepAud
 RumbleSweepAudioProcessorEditor::~RumbleSweepAudioProcessorEditor()
 {
     setLookAndFeel (nullptr);
-}
-
-void RumbleSweepAudioProcessorEditor::parentHierarchyChanged()
-{
-    if (auto* peer = getPeer())
-    {
-        const auto engines = peer->getAvailableRenderingEngines();
-        for (int i = 0; i < engines.size(); ++i)
-            if (engines[i].containsIgnoreCase ("software"))
-            {
-                peer->setCurrentRenderingEngine (i);
-                break;
-            }
-    }
-    repaint();
 }
 
 void RumbleSweepAudioProcessorEditor::paint (juce::Graphics& g)
