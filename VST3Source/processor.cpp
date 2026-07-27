@@ -44,10 +44,15 @@ tresult PLUGIN_API Processor::process(Vst::ProcessData& data) {
         return kResultOk;
 
     const int32 channels = std::min<int32>(data.inputs[0].numChannels, data.outputs[0].numChannels);
-    const float cutoff = 90.0f * std::pow(20000.0f / 90.0f, static_cast<float>(sweep));
+
+    // Sweep maps from a clearly dark 120 Hz to an open 18 kHz response.
+    const float cutoff = 120.0f * std::pow(18000.0f / 120.0f, static_cast<float>(sweep));
     const float alpha = 1.0f - std::exp(-2.0f * 3.14159265358979323846f * cutoff / static_cast<float>(sampleRate));
-    const float drive = 1.0f + static_cast<float>(crunch) * 10.0f;
-    const float norm = 1.0f / std::tanh(drive);
+
+    // Dividing by drive keeps the small-signal level close to unity, avoiding the
+    // apparent volume boost of tanh(x * drive) / tanh(drive).
+    const float drive = 1.0f + static_cast<float>(crunch) * 12.0f;
+    const float wet = static_cast<float>(crunch);
 
     for (int32 ch = 0; ch < channels; ++ch) {
         auto* in = data.inputs[0].channelBuffers32[ch];
@@ -60,7 +65,9 @@ tresult PLUGIN_API Processor::process(Vst::ProcessData& data) {
         }
 
         for (int32 i = 0; i < data.numSamples; ++i) {
-            const float saturated = std::tanh(in[i] * drive) * norm;
+            const float dry = in[i];
+            const float shaped = std::tanh(dry * drive) / drive;
+            const float saturated = dry + wet * (shaped - dry);
             z += alpha * (saturated - z);
             out[i] = z;
         }
