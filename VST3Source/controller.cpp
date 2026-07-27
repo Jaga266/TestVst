@@ -18,7 +18,7 @@ tresult PLUGIN_API Controller::initialize(FUnknown* context) {
 
 IPlugView* PLUGIN_API Controller::createView(FIDString name) {
     if (name && std::strcmp(name, Vst::ViewType::kEditor) == 0)
-        return new VSTGUI::VST3Editor(this, "RumbleView", "Rumble.uidesc");
+        return new VSTGUI::VST3Editor(this, "view", "Rumble.uidesc");
     return nullptr;
 }
 
@@ -32,4 +32,4 @@ tresult PLUGIN_API Controller::setComponentState(IBStream* state) {
     setParamNormalized(kBypassId, bypass ? 1.0 : 0.0);
     return kResultOk;
 }
-}
+} // namespace Rumble
